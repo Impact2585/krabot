@@ -1,20 +1,5 @@
-#define LEFT_DRIVETRAIN_MOTOR motor1
-#define RIGHT_DRIVETRAIN_MOTOR motor2
-#define DEADZONE 10
-#define USE_ARCADE_DRIVE
-
-//returns the absoluteValue of value
-long absoluteValue(long value)
-{
-	return value > 0 ? value : -value;
-}
-
-//sets the motorValue to 0 if it is less than or equal to the deadonzone
-void setDeadzone(long *motorValue)
-{
-	if(absoluteValue(*motorValue) <= DEADZONE)
-		*motorValue = 0;
-}
+#include "krabot.h"
+#include "functions.c"
 
 //the drive task
 task drive()
@@ -40,7 +25,36 @@ task drive()
 			setMotorSpeed(RIGHT_DRIVETRAIN_MOTOR, rightMotorValue);
 		#endif
 		//waits 10 milliseconds after every loop to not hog the cpu
-		wait1Msec(10); 
+		wait1Msec(10);
+	}
+}
+
+//task that controls the lift
+task lift()
+{
+	while(true) {
+		int liftMotorSpeed = getJoystickValue(ChD);
+
+		//doesn't allow the lift to move forward if it's pressing the limit switch
+		if(getBumperValue(LIFT_LIMIT_SWITCH) == 1) {
+			if(liftMotorSpeed > 0) {
+				liftMotorSpeed = 0;
+			}
+		}
+
+		setMotorSpeed(LIFT_MOTOR, liftMotorSpeed);
+		wait1Msec(10);
+	}
+}
+
+//task that controls the claw
+task claw()
+{
+	while(true) {
+		int clawMotorSpeed = inputProcess(getJoystickValue(BtnFUp), getJoystickValue(BtnFDown), CLAW_SPEED);
+		setMotorSpeed(CLAW_MOTOR, clawMotorSpeed);
+
+		wait1Msec(10);
 	}
 }
 
@@ -49,4 +63,10 @@ task main()
 {
 	//starts the drive task
 	startTask(drive);
+	
+	//starts the lift task
+	startTask(lift);
+
+	//starts the claw task
+	startTask(claw);
 }
