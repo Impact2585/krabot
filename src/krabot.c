@@ -10,7 +10,7 @@ task drive()
 			//arcade drive
 			int forwardValue = getJoystickValue(ChA);
 			int rotationValue = getJoystickValue(ChC);
-			setDeadzone(&forwardValue);
+			setDeadZone(&forwardValue);
 			//sets the left motor speed to the forwardValue + the rotationValue
 			setMotorSpeed(LEFT_DRIVETRAIN_MOTOR, forwardValue + rotationValue);
 			//sets the right motor speed to forwardValue - rotationValue
@@ -19,8 +19,8 @@ task drive()
 			//tank drive
 			int leftMotorValue = getJoystickValue(ChA);
 			int rightMotorValue = getJoystickValue(ChD);
-			setDeadzone(&leftMotorValue);
-			setDeadzone(&rightMotorValue);
+			setDeadZone(&leftMotorValue);
+			setDeadZone(&rightMotorValue);
 			setMotorSpeed(LEFT_DRIVETRAIN_MOTOR, leftMotorValue);
 			setMotorSpeed(RIGHT_DRIVETRAIN_MOTOR, rightMotorValue);
 		#endif
@@ -63,7 +63,7 @@ task main()
 {
 	//starts the drive task
 	startTask(drive);
-	
+
 	//starts the lift task
 	startTask(lift);
 
