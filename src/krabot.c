@@ -2,7 +2,10 @@
 #pragma config(Motor, motor6, RIGHT_DRIVETRAIN_MOTOR, tmotorVexIQ, openLoop, encoder)
 #pragma config(Motor, motor10, LIFT_MOTOR, tmotorVexIQ, openLoop, encoder)
 #pragma config(Motor, motor11, CLAW_MOTOR, tmotorVexIQ, openLoop, encoder)
+#pragma config(Sensor, port4,  GYRO,     sensorVexIQ_Gyro)
+#pragma config(Sensor, port5,  COLOR_SENSOR,  sensorVexIQ_Color12Color)
 #pragma config(Sensor, port8, LIFT_LIMIT_SWITCH, sensorVexIQ_Touch)
+
 #define DEADZONE 10
 #define USE_ARCADE_DRIVE
 #define CLAW_SPEED 50
@@ -31,6 +34,21 @@ int inputProcess(int buttonValue1, int buttonValue2, int speed)
 	} else {
 		return 0;
 	}
+}
+
+// returns 1 if color sensor detects red 0 otherwise
+bool redDetected(){
+	return getColorName(COLOR_SENSOR) == colorRed;
+}
+
+// returns 1 if color sensor detects blue 0 otherwise
+bool blueDetected(){
+	return getColorName(COLOR_SENSOR) == colorBlue;
+}
+
+// returns value from 0 - 359 for heading of gyro in degrees
+long gyroHeading(){
+	return getGyroHeading(GYRO);
 }
 
 //the drive task
@@ -95,6 +113,9 @@ task claw()
 //main task
 task main()
 {
+	//reset gyro heading
+	resetGyro(GYRO);
+	
 	//starts the drive task
 	startTask(drive);
 
