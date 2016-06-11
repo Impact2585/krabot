@@ -5,6 +5,8 @@
 #pragma config(Sensor, port4,  GYRO,     sensorVexIQ_Gyro)
 #pragma config(Sensor, port5,  COLOR_SENSOR,  sensorVexIQ_Color12Color)
 #pragma config(Sensor, port8, LIFT_LIMIT_SWITCH, sensorVexIQ_Touch)
+#pragma config(Sensor, port9, DISTANCE_SENSOR,     sensorVexIQ_Distance)
+#pragma config(Sensor, port12,  TOUCH_LED,      sensorVexIQ_LED)
 
 #define DEADZONE 10
 #define USE_ARCADE_DRIVE
@@ -113,9 +115,12 @@ task claw()
 //main task
 task main()
 {
+	//set the touch LED color
+	setTouchLEDColor(TOUCH_LED, colorBlue);
+
 	//reset gyro heading
 	resetGyro(GYRO);
-	
+
 	//starts the drive task
 	startTask(drive);
 
