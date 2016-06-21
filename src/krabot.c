@@ -3,14 +3,15 @@
 #pragma config(Motor, motor10, LIFT_MOTOR, tmotorVexIQ, openLoop, encoder)
 #pragma config(Motor, motor11, CLAW_MOTOR, tmotorVexIQ, openLoop, encoder)
 #pragma config(Sensor, port4,  GYRO,     sensorVexIQ_Gyro)
-#pragma config(Sensor, port5,  COLOR_SENSOR,  sensorVexIQ_Color12Color)
+#pragma config(Sensor, port3,  COLOR_SENSOR,  sensorVexIQ_Color12Color)
 #pragma config(Sensor, port8, LIFT_LIMIT_SWITCH, sensorVexIQ_Touch)
-#pragma config(Sensor, port9, DISTANCE_SENSOR,     sensorVexIQ_Distance)
-#pragma config(Sensor, port12,  TOUCH_LED,      sensorVexIQ_LED)
+#pragma config(Sensor, port7, DISTANCE_SENSOR,     sensorVexIQ_Distance)
+#pragma config(Sensor, port2,  TOUCH_LED,      sensorVexIQ_LED)
 
 #define DEADZONE 10
 #define USE_ARCADE_DRIVE
 #define CLAW_SPEED 50
+#define LIFT_SPEED 75
 
 //returns the absoluteValue of value
 long absoluteValue(long value)
@@ -60,12 +61,12 @@ task drive()
 		//uses arcade drive if USE_ARCADE_DRIVE is defined and tank drive if not
 		#ifdef USE_ARCADE_DRIVE
 			//arcade drive
-			int rotationValue = getJoystickValue(ChA);
-			int forwardValue = getJoystickValue(ChC);
+			int rotationValue = getJoystickValue(ChC);
+			int forwardValue = getJoystickValue(ChA);
 			setDeadZone(&forwardValue);
-			//sets the left motor speed to the forwardValue + the rotationValue
-			setMotorSpeed(RIGHT_DRIVETRAIN_MOTOR, forwardValue - rotationValue);
-			//sets the right motor speed to forwardValue - rotationValue
+			//sets the right motor speed to the inverse of forwardValue - the rotationValue
+			setMotorSpeed(RIGHT_DRIVETRAIN_MOTOR, -(forwardValue - rotationValue));
+			//sets the left motor speed to forwardValue + rotationValue
 			setMotorSpeed(LEFT_DRIVETRAIN_MOTOR, forwardValue + rotationValue);
 		#else
 			//tank drive
@@ -81,19 +82,42 @@ task drive()
 	}
 }
 
+//task that controls the touch led
+task changeTouchLED()
+{
+	bool toggle = true;
+	while(1) {
+		if(getTouchLEDValue(TOUCH_LED)) {
+			toggle ^= true;
+			setTouchLEDColor(TOUCH_LED, toggle ? colorBlue : colorRed);
+			sleep(1000);
+		}
+
+
+		wait1Msec(20);
+	}
+
+}
+
 //task that controls the lift
 task lift()
 {
+	bool prevToggle = false;
+	bool turnLimitSwitchOff = false;
+	bool toggleLimitSwitch = false;
 	while(true) {
-		int liftMotorSpeed = getJoystickValue(ChD);
-
+		toggleLimitSwitch = (bool)getJoystickValue(BtnFUp);
+		int liftMotorSpeed = inputProcess(getJoystickValue(BtnRUp), getJoystickValue(BtnRDown), LIFT_SPEED);
+		if(toggleLimitSwitch && !prevToggle) {
+			turnLimitSwitchOff ^= true;
+		}
 		//doesn't allow the lift to move forward if it's pressing the limit switch
-		if(getBumperValue(LIFT_LIMIT_SWITCH) == 1) {
+		if(getBumperValue(LIFT_LIMIT_SWITCH) && !turnLimitSwitchOff) {
 			if(liftMotorSpeed < 0) {
 				liftMotorSpeed = 0;
 			}
 		}
-
+		prevToggle = toggleLimitSwitch;
 		setMotorSpeed(LIFT_MOTOR, liftMotorSpeed);
 		wait1Msec(10);
 	}
@@ -103,7 +127,7 @@ task lift()
 task claw()
 {
 	while(true) {
-		int clawMotorSpeed = inputProcess(getJoystickValue(BtnFUp), getJoystickValue(BtnFDown), CLAW_SPEED);
+		int clawMotorSpeed = inputProcess(getJoystickValue(BtnLUp), getJoystickValue(BtnLDown), CLAW_SPEED);
 		setMotorSpeed(CLAW_MOTOR, clawMotorSpeed);
 
 		wait1Msec(10);
@@ -130,6 +154,10 @@ task main()
 	//starts the claw task
 	startTask(claw);
 
+	//start the touchLED task
+	startTask(changeTouchLED);
+
+    //main task doesn't hog the cpu
 	while(true) {
 		sleep(25);
 	}
